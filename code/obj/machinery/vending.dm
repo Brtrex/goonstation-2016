@@ -43,6 +43,7 @@
 	var/active = 1 //No sales pitches if off!
 	var/vend_ready = 1 //Are we ready to vend?? Is it time??
 	var/vend_delay = 5 //How long does it take to vend?
+	var/output_target = null //Where to output items
 
 	//Keep track of lists
 	var/list/slogan_list = list()//new() //List of strings
@@ -104,9 +105,68 @@
 		..()
 		src.panel_image = image(src.icon, src.icon_panel)
 
+	MouseDrop(over_object, src_location, over_location)
+		if(!istype(usr,/mob/living/))
+			boutput(usr, "<span style=\"color:red\">Only living mobs are able to set the [src.name]'s output target.</span>")
+			return
+
+		if(get_dist(over_object,src) > 1)
+			boutput(usr, "<span style=\"color:red\">The [src.name] unit is too far away from the target!</span>")
+			return
+
+		if(get_dist(over_object,usr) > 1)
+			boutput(usr, "<span style=\"color:red\">You are too far away from the target!</span>")
+			return
+
+		if (istype(over_object,/obj/storage/crate/))
+			var/obj/storage/crate/C = over_object
+			if (C.locked || C.welded)
+				boutput(usr, "<span style=\"color:red\">You can't use a currently unopenable crate as an output target.</span>")
+			else
+				src.output_target = over_object
+				boutput(usr, "<span style=\"color:blue\">You set the [src.name] to output to [over_object]!</span>")
+
+		else if (istype(over_object,/obj/table/) && istype(over_object,/obj/rack/))
+			var/obj/O = over_object
+			src.output_target = O.loc
+			boutput(usr, "<span style=\"color:blue\">You set the [src.name] to output on top of [O]!</span>")
+
+		else if (istype(over_object,/turf/simulated/floor/))
+			src.output_target = over_object
+			boutput(usr, "<span style=\"color:blue\">You set the [src.name] to output to [over_object]!</span>")
+
+		else
+			boutput(usr, "<span style=\"color:red\">You can't use that as an output target.</span>")
+		return
+
 	proc/vendinput(var/datum/mechanicsMessage/inp)
 		throw_item()
 		return
+
+	proc/get_output_location(var/atom/A,var/ejection = 0)
+		if (!src.output_target)
+			return src.loc
+
+		if (get_dist(src.output_target,src) > 1)
+			src.output_target = null
+			return src.loc
+
+		if (istype(src.output_target,/obj/storage/crate/))
+			var/obj/storage/crate/C = src.output_target
+			if (C.locked || C.welded)
+				src.output_target = null
+				return src.loc
+			else
+				if (C.open)
+					return C.loc
+				else
+					return C
+
+		else if (istype(src.output_target,/turf/simulated/floor/))
+			return src.output_target
+
+		else
+			return src.loc
 
 	// just making this proc so we don't have to override New() for every vending machine, which seems to lead to bad things
 	// because someone, somewhere, always forgets to use a ..()
@@ -1150,7 +1210,7 @@
 				if (!pay || (src.credit >= R.product_cost) || (account && account.fields["current_money"] >= R.product_cost)) //Conor12: Prevents credit hitting negative numbers if multiple items are bought at once.
 					R.product_amount--
 					if (ispath(product_path))
-						new product_path(get_turf(src))
+						new product_path(get_output_location())
 					else if (isicon(R.product_path))
 						var/icon/welp = icon(R.product_path)
 						if (welp.Width() > 32 || welp.Height() > 32)
