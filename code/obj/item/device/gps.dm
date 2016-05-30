@@ -37,41 +37,83 @@
 		if (!user)
 			return
 		user.machine = src
-		var/HTML = "<span style='font-size:80%;text-align:right'><A href='byond://?src=\ref[src];refresh=6'>(Refresh)</A></span><br>"
-		HTML += "Each GPS is coined with a unique four digit number followed by a four letter identifier.<br>This GPS is assigned <b>[serial]-[identifier]</b>.<hr>"
-		HTML += "<A href='byond://?src=\ref[src];getcords=1'>Get Local Coordinates</A><BR>"
+		var/HTML = {"<style type="text/css">
+		.desc {
+			background: #21272C;
+			width: calc(100% - 5px);
+			padding: 2px;
+		}
+		.buttons a {
+			display: inline-block;
+			background: #379ABE;
+			width: calc(50% - 7px);
+			text-transform: uppercase;
+			text-decoration: none;
+			color: #fff;
+			margin: 1px;
+			padding: 2px 0 2px 5px;
+			font-size: 11px;
+		}
+		.buttons.refresh a {
+			padding: 1px 0 1px 5px;
+			width: calc(100% - 7px);
+		}
+		.buttons a:hover {
+			background: #6BC7E8;
+		}
+		.gps {
+			border-top: 1px solid #379ABE;
+			background: #21272C;
+			padding: 3px;
+			margin: 0 0 1px 0;
+			font-size: 11px;
+		}
+		.gps.distress {
+			border-top: 2px solid #BE3737;
+			background: #2C2121;
+		}
+		.gps.group {
+			background: #379ABE;
+			margin: 0;
+			font-size: 12px;
+		}
+		</style>"}
+		HTML += "<div class='buttons refresh'><A href='byond://?src=\ref[src];refresh=6'>(Refresh)</A></div>"
+		HTML += "<div class='desc'>Each GPS is coined with a unique four digit number followed by a four letter identifier.<br>This GPS is assigned <b>[serial]-[identifier]</b>.</div><hr>"
+		HTML += "<div class='buttons'><A href='byond://?src=\ref[src];getcords=1'>Get Local Coordinates</A>"
 		if (allowtrack == 0)
-			HTML += "<A href='byond://?src=\ref[src];track1=2'>Enable Tracking</A><BR>"
+			HTML += "<A href='byond://?src=\ref[src];track1=2'>Enable Tracking</A>"
 		if (allowtrack == 1)
-			HTML += "<A href='byond://?src=\ref[src];track2=3'>Disable Tracking</A><BR>"
-		HTML += "<A href='byond://?src=\ref[src];changeid=4'>Change Identifier</A><BR>"
-		HTML += "<A href='byond://?src=\ref[src];help=5'>Toggle Distress Signal</A><BR>"
+			HTML += "<A href='byond://?src=\ref[src];track2=3'>Disable Tracking</A>"
+		HTML += "<A href='byond://?src=\ref[src];changeid=4'>Change Identifier</A>"
+		HTML += "<A href='byond://?src=\ref[src];help=5'>Toggle Distress Signal</A></div>"
 		HTML += "<hr>"
 
-		HTML += "<b>GPSes</b>:<br>"
+		HTML += "<div class='gps group'><b>GPSes</b></div>"
 		for (var/obj/item/device/gps/G in world)
 			if (G.allowtrack == 1)
 				var/turf/T = get_turf(G.loc)
 				if (!T)
 					continue
-				HTML += "<span style='font-size:80%'><b>[G.serial]-[G.identifier]</b> located at: [T.x], [T.y]. [src.get_z_info(T)]</span><br>"
-				HTML += "<span style='font-size:65%'>[G.distress ? "<font color=\"red\">(DISTRESS)</font>" : "<font color=666666>(DISTRESS)</font>"]</span><br>"
+				HTML += "<div class='gps [G.distress ? "distress" : ""]'><span><b>[G.serial]-[G.identifier]</b>"
+				HTML += "<span style='font-size:85%;float: right'>[G.distress ? "<font color=\"red\">(DISTRESS)</font>" : "<font color=666666>(DISTRESS)</font>"]</span>"
+				HTML += "<br><span>located at: [T.x], [T.y]</span><span style='float: right'>[src.get_z_info(T)]</span></span></div>"
 		HTML += "<hr>"
 
-		HTML += "<b>Tracking Implants</b>:<br>"
+		HTML += "<div class='gps group'><b>Tracking Implants</b></div>"
 		for (var/obj/item/implant/tracking/imp in world)
 			if (iscarbon(imp.loc))
 				var/turf/T = get_turf(imp.loc)
 				if (!T)
 					continue
-				HTML += "<span style='font-size:80%'><b>[imp.loc.name]</b> located at: [T.x], [T.y]. [src.get_z_info(T)]</span><br>"
+				HTML += "<div class='gps'><span><b>[imp.loc.name]</b><br><span>located at: [T.x], [T.y]</span><span style='float: right'>[src.get_z_info(T)]</span></span></div>"
 		HTML += "<hr>"
 
-		HTML += "<b>Beacons</b>:<br>"
+		HTML += "<div class='gps group'><b>Beacons</b></div>"
 		for (var/obj/machinery/beacon/B in machines)
 			if (B.enabled == 1)
 				var/turf/T = get_turf(B.loc)
-				HTML += "<span style='font-size:80%'><b>[B.sname]</b> located at: [T.x], [T.y]. [src.get_z_info(T)]</span><br>"
+				HTML += "<div class='gps'><span><b>[B.sname]</b><br><span>located at: [T.x], [T.y]</span><span style='float: right'>[src.get_z_info(T)]</span></span></div>"
 		HTML += "<br>"
 
 		//user << browse(HTML, "window=gps;size=400x540")
