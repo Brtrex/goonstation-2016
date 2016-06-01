@@ -945,52 +945,171 @@ var/telesci_modifiers_set = 0
 
 		return
 
-	attack_hand(var/mob/user as mob)
-		if (..(user))
+	proc/show_HTML(var/mob/user)
+		if (!user)
 			return
-
-		var/dat = "<head><TITLE>Teleport Computer</TITLE></head><body><br>"
+		user.machine = src
+		var/HTML = {"<style type="text/css">
+		.coord {
+			width: 33.333333%;
+			display: inline-block;
+		}
+		.output {
+			margin: 1px;
+			background: #21272C;
+		}
+		.coordn {
+			text-align: center;
+			padding: 3px 0 0 0;
+			font-size: 11px;
+			font-weight: bold;
+		}
+		.split.center {
+			width: 45%;
+		}
+		.split {
+			width: 27.5%;
+			display: inline-block;
+		}
+		.split a {
+			text-align: center;
+			width: 50%;
+			padding: 7px 0 7px 0;
+		}
+		.split a.big {
+			width: 100%;
+		}
+		.split a:hover {
+			color: #6BC7E8;
+		}
+		.buttons {
+			width: 100%;
+		}
+		.coord a {
+			display: inline-block;
+			text-decoration: none;
+			color: #ffffff;
+			font-size: 11px;
+		}
+		.coord a.target {
+			background: none;
+			width: 100%;
+			text-align: center;
+			padding: 7px 0 7px 0;
+			font-size: 16px;
+			font-weight: bold;
+		}
+		.buttons a {
+			width: calc(33.33333% - 7px);
+			background: #379ABE;
+			text-transform: uppercase;
+			margin: 1px;
+			padding: 4px 0 4px 5px;
+		}
+		.buttons.reset a {
+			background: #BE3737;
+			width: calc(100% - 5px);
+		}
+		.buttons.reset a:hover {
+			background: #8C2828;
+		}
+		.buttons a.big {
+			width: calc(50% - 7px)!important;
+		}
+		.buttons a:hover {
+			background: #6BC7E8;
+		}
+		.telesci.group {
+			background: #379ABE;
+			margin: 0;
+			font-size: 12px;
+		}
+		.telesci, #readout {
+			border-top: 1px solid #379ABE;
+			background: #21272C;
+			padding: 3px;
+			margin: 0 0 1px 0;
+			font-size: 11px;
+		}
+		#readout {
+			height: 50px;
+		}
+		.telesci a {
+			text-decoration: none;
+			color: #ffffff;
+			padding: 0 5px 0 5px;
+		}
+		.telesci a:hover {
+			color: #6BC7E8;
+		}
+		a.right {
+			float: right;
+		}
+		#readout a {
+			text-transform: uppercase;
+			text-decoration: none;
+			color: #ffffff;
+			font-weight: bold;
+			padding: 0 5px 0 5px;
+		}
+		#readout.error {
+			border-top: 2px solid #BE3737;
+			background: #2C2121;
+		}
+		</style>"}
 		if (!host_id)
-			dat += "<center id = \"readout\"><tt><font color=red><b>NO CONNECTION TO HOST</b></font></tt><br><a href='?src=\ref[src];reconnect=1'>Retry</a></center><br>"
+			HTML += "<center id = 'readout' class='error'><tt><font color=red><b>NO CONNECTION TO HOST</b></font></tt><br><a href='?src=\ref[src];reconnect=1'>Retry</a></center>"
 		else
-			dat += "<center id = \"readout\"><tt>[readout]</tt></center><br>"
+			HTML += "<center id = 'readout'><tt>[readout]</tt></center>"
 
-		dat += {"<script language="JavaScript">
-	function updateReadout(t)
-	{
-		document.getElementById("readout").innerHTML = "<tt>" + t + "</tt>";
-	}
-	</script>"}
+		HTML += {"<script language="JavaScript">function updateReadout(t){document.getElementById("readout").innerHTML = "<tt>" + t + "</tt>";}</script>"}
 
-		dat += "<b>Target Coordinates</b><BR>"
-		dat += "X: <A href='?src=\ref[src];decreaseX=10'>(<<)</A><A href='?src=\ref[src];decreaseX=1'>(<)</A><A href='?src=\ref[src];setX=1'> [xtarget] </A><A href='?src=\ref[src];increaseX=1'>(>)</A><A href='?src=\ref[src];increaseX=10'>(>>)</A><BR><BR>"
-		dat += "Y: <A href='?src=\ref[src];decreaseY=10'>(<<)</A><A href='?src=\ref[src];decreaseY=1'>(<)</A><A href='?src=\ref[src];setY=1'> [ytarget] </A><A href='?src=\ref[src];increaseY=1'>(>)</A><A href='?src=\ref[src];increaseY=10'>(>>)</A><BR><BR>"
-		dat += "Z: <A href='?src=\ref[src];decreaseZ=1'>(<)</A><A href='?src=\ref[src];setZ=1'> [ztarget] </A><A href='?src=\ref[src];increaseZ=1'>(>)</A>"
-		dat += "<br><br><br><A href='?src=\ref[src];send=1'>Send</A>"
-		dat += "<br><A href='?src=\ref[src];receive=1'>Receive</A>"
+		HTML += "<div class='telesci group'><b>Target Coordinates</b></div>"
+		HTML += "<div class='coord'><div class='output'>"
+		HTML += "<div class='coordn'>X</div><div class='split'><A href='?src=\ref[src];decreaseX=10'><i class='icon-double-angle-left'></i></A><A href='?src=\ref[src];decreaseX=1'><i class='icon-angle-left'></i></A></div>"
+		HTML += "<div class='split center'><A class='target' href='?src=\ref[src];setX=1'> [xtarget] </A></div>"
+		HTML += "<div class='split'><A href='?src=\ref[src];increaseX=1'><i class='icon-angle-right'></i></A><A href='?src=\ref[src];increaseX=10'><i class='icon-double-angle-right'></i></A></div></div></div>"
 
-		dat += "<br><A href='?src=\ref[src];portal=1'>Toggle Portal</A>"
+		HTML += "<div class='coord'><div class='output'>"
+		HTML += "<div class='coordn'>Y</div><div class='split'><A href='?src=\ref[src];decreaseY=10'><i class='icon-double-angle-left'></i></A><A href='?src=\ref[src];decreaseY=1'><i class='icon-angle-left'></i></A></div>"
+		HTML += "<div class='split center'><A class='target' href='?src=\ref[src];setY=1'> [ytarget] </A></div>"
+		HTML += "<div class='split'><A href='?src=\ref[src];increaseY=1'><i class='icon-angle-right'></i></A><A href='?src=\ref[src];increaseY=10'><i class='icon-double-angle-right'></i></A></div></div></div>"
+
+		HTML += "<div class='coord'><div class='output'>"
+		HTML += "<div class='coordn'>Z</div><div class='split'><A class='big' href='?src=\ref[src];decreaseZ=1'><i class='icon-angle-left'></i></A></div>"
+		HTML += "<div class='split center'><A class='target' href='?src=\ref[src];setZ=1'> [ztarget] </A></div>"
+		HTML += "<div class='split'><A class='big' href='?src=\ref[src];increaseZ=1'><i class='icon-angle-right'></i></A></div></div></div>"
+
+		HTML += "<br><br><div class='coord buttons'><A href='?src=\ref[src];send=1'>Send</A>"
+		HTML += "<A href='?src=\ref[src];receive=1'>Receive</A>"
+		HTML += "<A href='?src=\ref[src];portal=1'>Toggle Portal</A>"
 
 		if(allow_scan)
-			dat += "<br><br><A href='?src=\ref[src];scan=1'>Scan</A>"
+			HTML += "<br><A class='big' href='?src=\ref[src];scan=1'>Scan</A>"
 
 		if(allow_bookmarks)
-			dat += "<br><A href='?src=\ref[src];addbookmark=1'>Add Bookmark</A>"
+			HTML += "<A class='big' href='?src=\ref[src];addbookmark=1'>Add Bookmark</A></div><br><br>"
 
 		if(allow_bookmarks && bookmarks.len)
-			dat += "<br><br><br>Bookmarks:"
+			HTML += "<div class='telesci group'><b>Bookmarks</b></div>"
 			for (var/datum/teleporter_bookmark/b in bookmarks)
-				dat += "<br>[b.name] ([b.x]/[b.y]/[b.z]) <A href='?src=\ref[src];restorebookmark=\ref[b]'>Restore</A> <A href='?src=\ref[src];deletebookmark=\ref[b]'>Delete</A>"
+				HTML += "<div class='telesci'>[b.name] ([b.x]/[b.y]/[b.z]) <A class='right' href='?src=\ref[src];restorebookmark=\ref[b]'>Restore</A> <A class='right' href='?src=\ref[src];deletebookmark=\ref[b]'>Delete</A></div>"
 
-		dat += "<br><br><br><br><br><center><a href='?src=\ref[src];reconnect=2'>Reset Connection</a></center>"
+		HTML += "<br><br><br><div class='coord buttons reset'><a href='?src=\ref[src];reconnect=2'>Reset Connection</a></div>"
 
 		if (src.panel_open)
-			dat += "<br>Linked Pad Number: <a href='?src=\ref[src];setpad=1'>[src.padNum]</a><br>"
-			dat += net_switch_html()
+			HTML += "<div class='telesci'>Linked Pad Number: <a href='?src=\ref[src];setpad=1'>[src.padNum]</a></div>"
+			//HTML += net_switch_html()
 
-		user.machine = src
-		user << browse(dat, "window=t_computer;size=400x600")
+		user.Browse(HTML, "window=t_computer;title=Teleport Computer;size=400x500")
 		onclose(user, "t_computer")
+
+	attack_hand(var/mob/user as mob)
+		if ((user.contents.Find(src) || get_dist(src, user) <= 1 && istype(src.loc, /turf)))
+			src.show_HTML(user)
+		else
+			user.Browse(null, "window=t_computer")
+			user.machine = null
 		return
 
 	attackby(obj/item/W as obj, mob/user as mob)
