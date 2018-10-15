@@ -540,7 +540,8 @@
 					if (get_dist(src, src.target) <= src.attack_range)
 						var/mob/living/carbon/M = src.target
 						if (M)
-							ChaseAttack(M)
+							if (!istype(M.loc,/obj/storage) || !istype(M.loc,/obj/machinery/vehicle) || !istype(M.loc,/obj/vehicle))
+								ChaseAttack(M)
 							src.task = "attacking"
 							src.anchored = 1
 							src.target_lastloc = M.loc
@@ -591,7 +592,16 @@
 				else
 					if (get_dist(src, src.target) <= src.attack_range)
 						var/mob/living/carbon/M = src.target
-						if (!src.attacking) CritterAttack(src.target)
+						if (!src.attacking)
+							if (istype(M.loc,/obj/storage))
+								CritterAttackStorage(src.target)
+							else if (istype(M.loc,/obj/machinery/vehicle))
+								CritterAttackVehicle(src.target)
+							else if (istype(M.loc,/obj/vehicle))
+								var/obj/vehicle/V = M.loc
+								V.eject_rider(1,0)
+							else
+								CritterAttack(src.target)
 						if (!src.aggressive)
 							src.task = "thinking"
 							src.target = null
@@ -695,6 +705,46 @@
 	proc/ChaseAttack(mob/M)
 		src.visible_message("<span class='combat'><B>[src]</B> leaps at [src.target]!</span>")
 		//playsound(src.loc, "sound/weapons/genhit1.ogg", 50, 1, -1)
+
+	proc/CritterAttackStorage(mob/M)
+		var/obj/container = M.loc
+		src.visible_message("<span class='combat'><b>[src]</b> rattles [container]!</span>")
+		M.weakened += 2
+		playsound(M.loc, "sound/effects/bang.ogg", 50, 1)
+		var/wiggle = 6
+		while(wiggle > 0)
+			wiggle--
+			container.pixel_x = rand(-3,3)
+			container.pixel_y = rand(-3,3)
+			sleep(1)
+		container.pixel_x = 0
+		container.pixel_y = 0
+		var/obj/storage/C = container
+		if (C.can_flip_bust == 1)
+			boutput(M, "<span style=\"color:red\">[C] [pick("cracks","bends","shakes","groans")].</span>")
+			C.bust_out()
+			if (src.health <= 0)
+				boutput(M, "<span style=\"color:red\">[C] breaks apart!</span>")
+
+	proc/CritterAttackVehicle(mob/M)
+		var/obj/machinery/vehicle/pod = M.loc
+		src.visible_message("<span class='combat'><b>[src]</b> rattles [pod]!</span>")
+		M.weakened += 2
+		playsound(M.loc, "sound/effects/bang.ogg", 50, 1)
+		var/wiggle = 6
+		while(wiggle > 0)
+			wiggle--
+			pod.pixel_x = rand(-3,3)
+			pod.pixel_y = rand(-3,3)
+			sleep(1)
+		pod.pixel_x = 0
+		pod.pixel_y = 0
+		pod.blob_act(1) //src.health -= power * 2
+		if (prob(2))
+			for(M in pod)
+				src.visible_message("[src.target] falls out of [pod]")
+				boutput(M, "<span style=\"color:red\">[pod] gets shaken so much you fall out!.</span>")
+				pod.eject(M)
 
 	proc/CritterAttack(mob/M)
 		src.attacking = 1
